@@ -259,12 +259,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return
 
         if isinstance(content, (Data, File, Function, Jsx, Less)):
-            if self.command == 'GET':
+            if self.command in ('GET', 'HEAD'):
                 self.send_response(200)
                 if content.content_type is not None:
                     self.send_header("Content-type", content.content_type)
                 self.end_headers()
-                self.wfile.write(content.data)
+                if content.data:
+                    self.wfile.write(content.data)
             else:
                 self.send_error(501, "Unsupported method (%r)" % self.command)
 
