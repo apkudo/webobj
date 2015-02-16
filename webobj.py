@@ -233,10 +233,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.close_connection = 1
             return
 
+    def read_data(self, content_length):
+        if content_length in (None, '0'):
+            self.chunked = True
+            while True:
+                # chunked data format: '{:X}\r\n{}\r\n'.format(len(data), data)
+                chunk_size = self.rfile.readline().decode('utf-8', 'replace').rstrip('\r\n')
+                chunk_size = int(chunk_size, 16)
+                #print('chunk size: {}'.format(chunk_size))
+                # No more chunks.
+                if chunk_size == 0:
+                    break
+                data = self.rfile.read(chunk_size)
+                # Chunk delimiter '\r\n'.
+                new_line = self.rfile.read(len('\r\n'))
+                yield data
+            else:
+                self.chunked = False
+                data = self.rfile.read(int(content_length))
+                yield data
+
     def do_request(self):
         if self.command in ('POST', 'PUT'):
-            content_length = int(self.headers['Content-Length'])
-            data = self.rfile.read(content_length)
+            data = self.read_data(self.headers['Content-Length'])
 
         parsed_path = parse_path(self.path)
         try:
