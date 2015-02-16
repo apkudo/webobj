@@ -12,6 +12,7 @@ import time
 import traceback
 import urllib.parse
 import os.path
+import types
 
 
 def parse_path(path):
@@ -248,7 +249,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 # Chunk delimiter '\r\n'.
                 new_line = self.rfile.read(len('\r\n'))
                 yield data
-            else:
+        else:
                 self.chunked = False
                 data = self.rfile.read(int(content_length))
                 yield data
@@ -282,9 +283,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self.send_response(200)
                 if content.content_type is not None:
                     self.send_header("Content-type", content.content_type)
+                chunked = isinstance(content.data, types.GeneratorType)
+                if chunked:
+                    self.send_header('Transfer-Encoding', 'chunked')
                 self.end_headers()
+
+                def write_chunk():
+                    first_line = '{:x}\r\n'.format(len(chunk)).encode('utf-8')
+                    to_send = first_line + chunk + b'\r\n'
+                    self.wfile.write(to_send)
+
                 if content.data:
-                    self.wfile.write(content.data)
+                    if chunked:
+                        for chunk in content.data:
+                            write_chunk()
+                        # Chunk delimiter. see http://en.wikipedia.org/wiki/Chunked_transfer_encoding#Format
+                        self.wfile.write(b'0\r\n\r\n')
+                    else:
+                        self.wfile.write(content.data)
             else:
                 self.send_error(501, "Unsupported method (%r)" % self.command)
 
