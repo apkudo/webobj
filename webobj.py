@@ -296,6 +296,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 if content.data:
                     if chunked:
                         for chunk in content.data:
+                            #print(len(chunk))
                             write_chunk()
                         # Chunk delimiter. see http://en.wikipedia.org/wiki/Chunked_transfer_encoding#Format
                         self.wfile.write(b'0\r\n\r\n')
