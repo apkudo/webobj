@@ -8,6 +8,7 @@ def main():
     parser = ArgumentParser(description='Logcat.')
     parser.add_argument('module')
     parser.add_argument('--addr', default='localhost:8080')
+    parser.add_argument('--config', default=None)
 
     args = parser.parse_args(sys.argv[1:])
     module = __import__(args.module)
@@ -19,7 +20,7 @@ def main():
         port = int(addr_parts[1])
     addr = (host, port)
 
-    server = Server(module.routes, getattr(module, 'authenticator', None), addr)
+    server = Server(module.routes(args.config), getattr(module, 'authenticator', None), addr)
     server.start()
 
 script()
