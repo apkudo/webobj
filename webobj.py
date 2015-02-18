@@ -233,7 +233,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
 
     def read_data(self, content_length):
-        if content_length in (None, '0'):
+        if content_length is None:
             self.chunked = True
             while True:
                 # chunked data format: '{:X}\r\n{}\r\n'.format(len(data), data)
