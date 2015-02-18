@@ -68,8 +68,6 @@ class NewWebObject:
 
 class Route(namedtuple('Route', ['route', 'content'])):
     def matches(self, path, method):
-        if path == self.route:
-            return self.content
         if path.startswith(self.route):
             if hasattr(self.content, 'check_match'):
                 content = self.content.check_match(path[len(self.route):], method)
